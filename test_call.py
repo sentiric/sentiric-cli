@@ -7,8 +7,8 @@ from queue import Queue
 # --- Test Ayarları ---
 TARGET_HOST = "127.0.0.1"
 TARGET_PORT = 5060
-CALLER_ID = "1001"
-DESTINATION = "902124548590"
+CALLER_ID = "05548777858"
+DESTINATION = "02124548590"
 
 # --- Beklenen Log Mesajları ---
 EXPECTED_SIP_LOG = f"Olay 'call.events' kuyruğuna yayınlandı"
