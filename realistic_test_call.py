@@ -10,12 +10,14 @@ from datetime import datetime
 import statistics
 
 class CallResult:
-    """Her bir çağrının sonucunu tutmak için bir sınıf."""
-    def __init__(self, caller_id, success=False, error=None, duration=0, anons_id=""):
+    """Her bir çağrının sonucunu ve metriklerini tutmak için bir sınıf."""
+    def __init__(self, caller_id, success=False, error=None, 
+                 total_duration=0, response_latency=0, anons_id=""):
         self.caller_id = caller_id
         self.success = success
         self.error = error
-        self.duration = duration
+        self.total_duration = total_duration # Tüm akışın süresi
+        self.response_latency = response_latency # INVITE sonrası ilk yanıtın gecikmesi
         self.anons_id = anons_id
 
 def generate_sip_packet(method: str, target_host: str, target_port: int,
@@ -63,7 +65,7 @@ def get_routable_ip(target_host='8.8.8.8'):
 
 def run_realistic_call_flow(caller_id, destination_number, host, port, local_port, base_duration, anons_list):
     """
-    Tek bir kullanıcının daha gerçekçi çağrı akışını simüle eder.
+    Tek bir kullanıcının daha gerçekçi çağrı akışını simüle eder ve metrikleri döndürür.
     """
     call_start_time = time.monotonic()
     
@@ -79,18 +81,19 @@ def run_realistic_call_flow(caller_id, destination_number, host, port, local_por
 
     try:
         sock.bind((local_bind_ip, local_port))
-        sock.settimeout(10)
+        sock.settimeout(10) # Hataları yakalamak için genel bir timeout
 
-        # SIP-Signaling servisine giden INVITE (sembolik)
-        # Gerçek senaryoda bu servis media-service'i tetikler.
-        # Biz burada destination_number'ı kullanıyoruz.
         invite_packet = generate_sip_packet(
             "INVITE", host, port, caller_id, destination_number,
             sip_message_ip, local_port, call_id, from_tag, 1
         )
+        
+        invite_sent_time = time.monotonic()
         sock.sendto(invite_packet.encode('utf-8'), (host, port))
         
         data, addr = sock.recvfrom(1024)
+        response_received_time = time.monotonic()
+        latency = response_received_time - invite_sent_time
 
         time.sleep(actual_duration)
 
@@ -101,14 +104,17 @@ def run_realistic_call_flow(caller_id, destination_number, host, port, local_por
         sock.sendto(bye_packet.encode('utf-8'), (host, port))
         
         end_time = time.monotonic()
-        return CallResult(caller_id, success=True, duration=end_time - call_start_time, anons_id=anons_to_play)
+        return CallResult(caller_id, success=True, total_duration=end_time - call_start_time, 
+                          response_latency=latency, anons_id=anons_to_play)
 
     except socket.timeout:
         end_time = time.monotonic()
-        return CallResult(caller_id, success=False, error="Socket timeout", duration=end_time - call_start_time, anons_id=anons_to_play)
+        return CallResult(caller_id, success=False, error="Socket timeout (sunucudan yanıt alınamadı)", 
+                          total_duration=end_time - call_start_time, response_latency=-1, anons_id=anons_to_play)
     except Exception as e:
         end_time = time.monotonic()
-        return CallResult(caller_id, success=False, error=str(e), duration=end_time - call_start_time, anons_id=anons_to_play)
+        return CallResult(caller_id, success=False, error=str(e), 
+                          total_duration=end_time - call_start_time, response_latency=-1, anons_id=anons_to_play)
     finally:
         sock.close()
 
@@ -120,6 +126,12 @@ def generate_report(args, results, total_time):
     success_rate = (len(successful_calls) / len(results)) * 100 if results else 0
     actual_cps = len(results) / total_time if total_time > 0 else 0
     
+    latencies = [r.response_latency for r in successful_calls if r.response_latency >= 0]
+    avg_latency = statistics.mean(latencies) * 1000 if latencies else 0
+    p95_latency = statistics.quantiles(latencies, n=100)[94] * 1000 if len(latencies) > 20 else (max(latencies) * 1000 if latencies else 0)
+    p99_latency = statistics.quantiles(latencies, n=100)[98] * 1000 if len(latencies) > 100 else (max(latencies) * 1000 if latencies else 0)
+    max_latency = max(latencies) * 1000 if latencies else 0
+
     report_filename = f"realistic_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
     
     with open(report_filename, "w", encoding="utf-8") as f:
@@ -139,6 +151,13 @@ def generate_report(args, results, total_time):
         f.write(f"- **Başarılı Çağrı:** `{len(successful_calls)}`\n")
         f.write(f"- **Başarısız Çağrı:** `{len(failed_calls)}`\n")
         f.write(f"- **Başarı Oranı:** `{success_rate:.2f}%`\n\n")
+        
+        f.write("### Gecikme (Latency) İstatistikleri (ms)\n")
+        f.write(f"INVITE gönderimi ile ilk sunucu yanıtı arasındaki süre.\n\n")
+        f.write(f"- **Ortalama Yanıt Süresi:** `{avg_latency:.2f}` ms\n")
+        f.write(f"- **95. Yüzdelik (P95):** `{p95_latency:.2f}` ms (Çağrıların %95'i bu süreden daha hızlı yanıtlandı)\n")
+        f.write(f"- **99. Yüzdelik (P99):** `{p99_latency:.2f}` ms (Çağrıların %99'u bu süreden daha hızlı yanıtlandı)\n")
+        f.write(f"- **Maksimum Gecikme:** `{max_latency:.2f}` ms\n\n")
         
         if failed_calls:
             f.write("## Hata Detayları\n")
