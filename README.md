@@ -1,36 +1,51 @@
-# Sentiric CLI (Command Line Interface)
+# 🛠️ Sentiric CLI (Command Line Interface)
 
-**Description:** A command-line interface tool for developers and administrators to manage and automate the Sentiric platform.
+[![Status](https://img.shields.io/badge/status-active-success.svg)]()
+[![Language](https://img.shields.io/badge/language-Python-blue.svg)]()
 
-**Core Responsibilities:**
-*   Providing a convenient interface to interact with various Sentiric microservices (via `sentiric-api-gateway-service`).
-*   Automating common tasks such as user management, dialplan configuration, and system monitoring.
-*   Facilitating testing and debugging of platform functionalities.
-*   Examples: `sentiric-cli user add`, `sentiric-cli dialplan list`, `sentiric-cli call active`.
+**Sentiric CLI**, geliştiriciler ve yöneticiler için Sentiric platformunu komut satırından yönetmek, otomatize etmek ve test etmek için tasarlanmış bir araçtır.
 
-**Technologies:**
-*   Python (or Go)
-*   Command-line parsing libraries (e.g., `argparse` in Python, `cobra` in Go).
-*   HTTP/gRPC client libraries.
+## 🎯 Temel Sorumluluklar
 
-**API Interactions (As an API Client):**
-*   Consumes APIs provided by `sentiric-api-gateway-service` (for all management and operational APIs).
+*   **Platformla Etkileşim:** `sentiric-api-gateway-service` üzerinden çeşitli mikroservislerle etkileşim kurmak için uygun bir arayüz sağlar.
+*   **Otomasyon:** Kullanıcı yönetimi, dialplan yapılandırması gibi yaygın görevleri otomatize eder.
+*   **Test ve Hata Ayıklama:** Platformun işlevlerini, özellikle de telekomünikasyon akışlarını, test etmeyi ve hata ayıklamayı kolaylaştırır. Örnekler:
+    *   `stress_test_call.py`: Basit bir SIP çağrı simülatörü.
+    *   `concurrent_test_call.py`: Eş zamanlı SIP stres testi aracı.
+    *   `realistic_test_call.py`: Gerçekçi, "patlamalı" trafik üreten gelişmiş bir stres testi aracı.
 
-**Local Development:**
-1.  Clone this repository: `git clone https://github.com/sentiric/sentiric-cli.git`
-2.  Navigate into the directory: `cd sentiric-cli`
-3.  Install dependencies: `pip install -r requirements.txt` (Python) or `go mod tidy` (Go).
-4.  Create a `.env` file from `.env.example` to configure the API Gateway URL and authentication credentials.
-5.  Run the CLI locally: `python cli.py` (or build/run the Go executable).
+## 🛠️ Teknoloji Yığını
 
-**Configuration:**
-Refer to `config/` directory and `.env.example` for CLI-specific configurations, including API endpoint URLs and authentication tokens.
+*   **Dil:** Python
+*   **Kütüphaneler:** `argparse` (komut satırı argümanları için), `socket` (düşük seviye ağ iletişimi için).
 
-**Deployment:**
-This is typically distributed as a standalone executable or a Python package (`pip install sentiric-cli`).
+## 🔌 API Etkileşimleri
 
-**Contributing:**
-We welcome contributions! Please refer to the [Sentiric Governance](https://github.com/sentiric/sentiric-governance) repository for coding standards and contribution guidelines.
+*   **Protokol:** SIP (UDP üzerinden)
+*   **Hedef Servis:** `sentiric-sip-gateway-service` (ve dolayısıyla tüm telekom altyapısı).
+*   **Gelecek:** `sentiric-api-gateway-service`'e REST/JSON istekleri yapacak.
 
-**License:**
-This project is licensed under the [License](LICENSE).
+## 🚀 Kullanım
+
+1.  **Bağımlılıkları Yükleyin:**
+    ```bash
+    pip install -r requirements.txt
+    ```
+2.  **Stres Testi Aracını Çalıştırın:**
+    Script, komut satırı argümanları ile yapılandırılabilir. Yardım menüsünü görmek için:
+    ```bash
+    python concurrent_test_call.py --help
+    ```
+    **Örnek:** 10 thread kullanarak 50 çağrı başlatmak için:
+    ```bash
+    python concurrent_test_call.py --threads 10 --repeat 50
+    ```
+
+## 🤝 Katkıda Bulunma
+
+Katkılarınızı bekliyoruz! Lütfen projenin ana [Sentiric Governance](https://github.com/sentiric/sentiric-governance) reposundaki kodlama standartlarına ve katkıda bulunma rehberine göz atın.
+
+---
+## 🏛️ Anayasal Konum
+
+Bu servis, [Sentiric Anayasası'nın (v11.0)](https://github.com/sentiric/sentiric-governance/blob/main/docs/blueprint/Architecture-Overview.md) **Zeka & Orkestrasyon Katmanı**'nda yer alan merkezi bir bileşendir.
