@@ -166,5 +166,5 @@ def main():
 if __name__ == "__main__":
     main()
 
-
-# python stress_test_call.py --host 192.168.1.3 --port 5060 --caller-id 905548777858 --destination 902124548590 --repeat 10 --duration 3 --delay 1
+# make logs SERVICE="sip-gateway sip-signaling dialplan-service media-service agent-service cdr-service"
+# python stress_test_call.py --host 172.29.138.23 --port 5060 --caller-id 905548777858 --destination 902124548590 --repeat 10 --duration 3 --delay 1
