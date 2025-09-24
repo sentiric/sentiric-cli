@@ -41,6 +41,12 @@
     python concurrent_test_call.py --threads 10 --repeat 50
     ```
 
+## 🚀 Yerel Geliştirme
+
+1.  **Bağımlılıkları Yükleyin:**
+2.  **Ortam Değişkenlerini Ayarlayın:** `.env.example` dosyasını `.env` olarak kopyalayın ve gerekli değişkenleri doldurun.
+3.  **Servisi Çalıştırın:**
+
 ## 🤝 Katkıda Bulunma
 
 Katkılarınızı bekliyoruz! Lütfen projenin ana [Sentiric Governance](https://github.com/sentiric/sentiric-governance) reposundaki kodlama standartlarına ve katkıda bulunma rehberine göz atın.
